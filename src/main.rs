@@ -12,6 +12,7 @@ async fn fetch_currency_rates() -> Result<Value> {
     let client = reqwest::Client::new();
     let response = client
         .get(CURRENCY_API_URL)
+        .query(&[("base_currency", "IDR")])
         .header("apikey", api_key)
         .send()
         .await?
