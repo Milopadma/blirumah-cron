@@ -2,8 +2,8 @@ use anyhow::Result;
 use dotenv::dotenv;
 use job_scheduler::{Job, JobScheduler};
 use serde_json::Value;
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres, types::time::OffsetDateTime};
-use std::{env, time::Duration, sync::Arc};
+use sqlx::{postgres::PgPoolOptions, types::time::OffsetDateTime, Pool, Postgres};
+use std::{env, sync::Arc, time::Duration};
 
 const CURRENCY_API_URL: &str = "https://api.currencyapi.com/v3/latest";
 
@@ -30,7 +30,7 @@ async fn update_currency_rates(pool: &Pool<Postgres>) -> Result<()> {
         r#"
         INSERT INTO currency_rates (rates, last_updated)
         VALUES ($1, $2)
-        "#
+        "#,
     )
     .bind(rates)
     .bind(now)
@@ -44,7 +44,7 @@ async fn update_currency_rates(pool: &Pool<Postgres>) -> Result<()> {
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv().ok();
-    
+
     let database_url = env::var("DATABASE_URL")?;
     let pool = PgPoolOptions::new()
         .max_connections(5)
@@ -59,7 +59,7 @@ async fn main() -> Result<()> {
             rates JSONB NOT NULL,
             last_updated TIMESTAMPTZ NOT NULL
         )
-        "#
+        "#,
     )
     .execute(&pool)
     .await?;
@@ -72,7 +72,7 @@ async fn main() -> Result<()> {
 
     // Schedule job to run daily at midnight UTC
     let pool_clone = Arc::clone(&pool);
-    scheduler.add(Job::new("0 0 * * * *".parse().unwrap(), move || {
+    scheduler.add(Job::new("0 0 * * *".parse().unwrap(), move || {
         let pool = Arc::clone(&pool_clone);
         tokio::spawn(async move {
             if let Err(e) = update_currency_rates(&pool).await {
