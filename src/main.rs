@@ -72,7 +72,7 @@ async fn main() -> Result<()> {
 
     // Schedule job to run daily at midnight UTC
     let pool_clone = Arc::clone(&pool);
-    scheduler.add(Job::new("0 0 * * *".parse().unwrap(), move || {
+    scheduler.add(Job::new("0 0 0 * * *".parse().unwrap(), move || {
         let pool = Arc::clone(&pool_clone);
         tokio::spawn(async move {
             if let Err(e) = update_currency_rates(&pool).await {
@@ -81,8 +81,9 @@ async fn main() -> Result<()> {
         });
     }));
 
+    println!("DEBUG Scheduler started, waiting for next job execution...");
     loop {
         scheduler.tick();
-        tokio::time::sleep(Duration::from_secs(1)).await;
+        tokio::time::sleep(Duration::from_secs(30)).await;
     }
 }
